@@ -5,7 +5,7 @@ const express = require('express');
 const {creator, forId, interceptor, PropertyInObject, arrToObj} =  require('../repository/rest');
 const valid = require('../valid') ;
 const models = require('../db');
-
+const extentions = require('../routs/extention/ext-rest')
 const Rest = (function(){
     function Rest(config){
         PropertyInObject(config.name);
@@ -14,10 +14,12 @@ const Rest = (function(){
         this.router = express.Router();
         this.router.route(this.name).path = this.name
         this.valid = Object.keys(valid).includes(this.name) ? true : false;
-        this.allowMethods = ['one','all','create', 'updata'];
-        this.storege  = arrToObj(this.allowMethods);
+        this.allowMethods = ['one','all','create', 'updata'].concat(this.config.extentions);
+
+        // this.storege  = arrToObj(this.allowMethods);
     }
-        Rest.prototype.init = function(exception = []){
+        Rest.prototype.run = function(exception = []){
+           this.extention();
             this.allowMethods.forEach((method) => {
                 if (!exception.includes(method) && method in this) {
                     this[method](method);
@@ -26,17 +28,25 @@ const Rest = (function(){
                 }
             });
         }
+        Rest.prototype.extention = function(){ 
+            if ('extentions' in  this.config && Array.isArray(this.config.extentions)){ ///?????????
+                this.config.extentions.forEach((methodName) =>{
+                    Rest.prototype[methodName] = extentions.methods(methodName);
+                });
+            }
+        }
         Rest.prototype.getRouter = function(){
             return this.router;
         }
         Rest.prototype.all = function(selfName){
+
             const self = selfName;
-            this.router.get('', async (req, res) => { 
+            this.router.get('/', async (req, res) => { 
                 res.send(
                     await models[this.name].findAll().catch(e => res.send(e))
                 .catch(interceptor(res)));
                     if (!('storege' in this.config)){
-                        console.log('non storage');
+                        console.log(' storage : none');
                         
                     }else{
                         if (this.config.storege.includes(self)) {
@@ -56,7 +66,7 @@ const Rest = (function(){
         }   
         Rest.prototype.create = function(selfName){
             const self = selfName;
-            this.router.post('', async (req, res) => { console.log(this.valid);
+            this.router.post('', async (req, res) => { 
                 this.valid ? valid[this.name](req.body) : console.log('WARNING: validation was not done !!!');
                 const user =  creator(req.body, this.name);
                 await models[this.name].create(user).catch(interceptor(res));
