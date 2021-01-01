@@ -1,62 +1,61 @@
 
 
 const express = require('express');
-
-const {creator, forId, interceptor, PropertyInObject, arrToObj} =  require('../repository/rest');
+const {creator, forId, interceptor, PropertyInObject: checkModel, arrToObj} =  require('../repository/rest');
 const valid = require('../valid') ;
 const models = require('../db');
 const extentions = require('../routs/extention/ext-rest')
+
 const Rest = (function(){
     function Rest(config){
-        PropertyInObject(config.name);
+        checkModel(config.name);
         this.config = config;
         this.name = config.name;  
+        
         this.router = express.Router();
         this.router.route(this.name).path = this.name
-        this.valid = Object.keys(valid).includes(this.name) ? true : false;
-        this.allowMethods = ['one','all','create', 'updata'].concat(this.config.extentions);
+        
+        this.valid = this.isValid(); 
+                
+        this.exception = this.config.exception || [];
+        this.extentions = this.config.extentions || [];
 
-        // this.storege  = arrToObj(this.allowMethods);
+        const defaultMetods = ['one','all','create', 'updata']; 
+        this.allowMethods = defaultMetods.concat(this.extentions);
+
     }
-        Rest.prototype.run = function(exception = []){
-           this.extention();
+        Rest.prototype.run = function(){
+            this.extention();
             this.allowMethods.forEach((method) => {
-                if (!exception.includes(method) && method in this) {
+                if (!this.exception.includes(method) && method in this) {
                     this[method](method);
                 }else{
-                    console.log(`method ${method} can not call` );
+                    console.log(`method ${method} can not call`);
                 }
             });
         }
         Rest.prototype.extention = function(){ 
-            if ('extentions' in  this.config && Array.isArray(this.config.extentions)){ ///?????????
-                this.config.extentions.forEach((methodName) =>{
-                    Rest.prototype[methodName] = extentions.methods(methodName);
+            this.extentions.forEach((methodName) =>{
+                const defineMethod = extentions.methods(methodName);
+                    if (defineMethod) Rest.prototype[methodName] = defineMethod;
                 });
-            }
+        }
+        Rest.prototype.isValid = function(){
+            return Object.keys(valid).includes(this.name) ? valid[this.name] 
+                : console.log(`WARNING: validation for model ${this.name}  is not defined  !!!`);
         }
         Rest.prototype.getRouter = function(){
             return this.router;
         }
+        ///////////////////////////////////////////////////REST///////////////////////////////////////////////
         Rest.prototype.all = function(selfName){
-
             const self = selfName;
             this.router.get('/', async (req, res) => { 
                 res.send(
                     await models[this.name].findAll().catch(e => res.send(e))
-                .catch(interceptor(res)));
-                    if (!('storege' in this.config)){
-                        console.log(' storage : none');
-                        
-                    }else{
-                        if (this.config.storege.includes(self)) {
-                            console.log(' storage');
-                        }
-                    }
-                
+                    .catch(interceptor(res))
+                );
             });      
-                    
-
         }
         Rest.prototype.one = function(selfName){
             const self = selfName;
@@ -67,12 +66,13 @@ const Rest = (function(){
         Rest.prototype.create = function(selfName){
             const self = selfName;
             this.router.post('', async (req, res) => { 
-                this.valid ? valid[this.name](req.body) : console.log('WARNING: validation was not done !!!');
+                if (this.valid) valid[this.name](req.body)
+                
                 const user =  creator(req.body, this.name);
                 await models[this.name].create(user).catch(interceptor(res));
                 res.sendStatus(201);
-                });
-            }
+            });
+        }
         return Rest;
 })();
 //  const rest =  new Rest('user');
