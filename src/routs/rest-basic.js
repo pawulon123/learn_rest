@@ -20,7 +20,7 @@ const Rest = (function(){
         this.exception = this.config.exception || [];
         this.extentions = this.config.extentions || [];
 
-        const defaultMetods = ['one','all','create', 'updata']; 
+        const defaultMetods = ['one','all','create', 'updata','delete']; 
         this.allowMethods = defaultMetods.concat(this.extentions);
 
     }
@@ -67,34 +67,27 @@ const Rest = (function(){
             const self = selfName;
             this.router.post('', async (req, res) => { 
                 if (this.valid) valid[this.name](req.body)
-                
-                const user =  creator(req.body, this.name);
-                await models[this.name].create(user).catch(interceptor(res));
+                const model =  creator(req.body, this.name);
+                await models[this.name].create(model).catch(interceptor(res));
                 res.sendStatus(201);
             });
         }
-        return Rest;
+        Rest.prototype.updata = function(){
+            this.router.put('/:id', async (req, res) => {
+                if (this.valid) valid[this.name](req.body)
+                const model =  creator(req.body, this.name);
+                await models[this.name].update(creator(req.body,this.name),forId(req.params.id)).catch(interceptor(res));
+                res.end();
+            });
+        }
+        Rest.prototype.delete = function(){
+            this.router.delete('/:id', async (req, res) => {
+            await models[this.name].destroy(forId(req.params.id)).catch(interceptor(res));
+            res.end();
+            });
+        }
+  
+return Rest;
 })();
-//  const rest =  new Rest('user');
-//  rout.all();
 
-
-// const user = require('../db')['user'];
-
-// router.get('/:id', async (req, res) => {
-//     res.send(await user.findAll(forId(req.params.id)).catch(interceptor(res)))
-// });
-// router.post('', async (req, res) => {
-//     validUser(req.body);
-//     await user.create(creator(req.body, 'user')).catch(interceptor(res));
-//     res.sendStatus(201);
-// });
-// router.put('/:id', async (req, res) => {
-//     validUser(req.body);
-//     await user.update(creator(req.body,'user'),forId(req.params.id)).catch(interceptor(res));
-//     res.sendStatus(200);
-// });
-// router.delete('/:id', async (req, res) => {
-//     await res.status(200).send((req.params.id).toString().catch(interceptor(res)))
-// });
 module.exports = Rest;
