@@ -1,7 +1,5 @@
-
-
 const express = require('express');
-const {creator, forId, interceptor, PropertyInObject: checkModel, arrToObj} =  require('../repository/rest');
+const {creator, where, interceptor, checkModel} =  require('../repository/rest');
 const valid = require('../valid') ;
 const models = require('../db');
 const extentions = require('../routs/extention/ext-rest')
@@ -17,7 +15,7 @@ const Rest = (function(){
         
         this.valid = this.isValid(); 
                 
-        this.exception = this.config.exception || [];
+        this.exceptions = this.config.exceptionMethods || [];
         this.extentions = this.config.extentions || [];
 
         const defaultMetods = ['one','all','create', 'updata','delete']; 
@@ -27,11 +25,8 @@ const Rest = (function(){
         Rest.prototype.run = function(){
             this.extention();
             this.allowMethods.forEach((method) => {
-                if (!this.exception.includes(method) && method in this) {
-                    this[method](method);
-                }else{
-                    console.log(`method ${method} can not call`);
-                }
+                !this.exceptions.includes(method) && method in this ? this[method](method)
+                    :console.log(`method ${method} was  not call for ${this.name} model `);
             });
         }
         Rest.prototype.extention = function(){ 
@@ -60,13 +55,13 @@ const Rest = (function(){
         Rest.prototype.one = function(selfName){
             const self = selfName;
             this.router.get('/:id', async (req, res) => {
-                res.send(await models[this.name].findAll(forId(req.params.id)).catch(interceptor(res)))
+                res.send(await models[this.name].findAll(where(req.params,'id')).catch(interceptor(res)))
             });
-        }   
+        }
         Rest.prototype.create = function(selfName){
             const self = selfName;
             this.router.post('', async (req, res) => { 
-                if (this.valid) valid[this.name](req.body)
+                if (this.valid) valid[this.name](req.body);
                 const model =  creator(req.body, this.name);
                 await models[this.name].create(model).catch(interceptor(res));
                 res.sendStatus(201);
@@ -76,18 +71,17 @@ const Rest = (function(){
             this.router.put('/:id', async (req, res) => {
                 if (this.valid) valid[this.name](req.body)
                 const model =  creator(req.body, this.name);
-                await models[this.name].update(creator(req.body,this.name),forId(req.params.id)).catch(interceptor(res));
+                await models[this.name].update(model,where(req.params,'id')).catch(interceptor(res));
                 res.end();
             });
         }
         Rest.prototype.delete = function(){
             this.router.delete('/:id', async (req, res) => {
-            await models[this.name].destroy(forId(req.params.id)).catch(interceptor(res));
+            await models[this.name].destroy(where(req.params,'id')).catch(interceptor(res));
             res.end();
             });
         }
   
 return Rest;
 })();
-
 module.exports = Rest;

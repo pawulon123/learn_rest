@@ -1,20 +1,22 @@
 
-const models = require('../db')
+const { Op } = require("sequelize");
+const models = require('../db');
+
 const fn = {
 
     creator(bodyJson, modelName){
         // console.log();
         
-       fn.PropertyInObject(modelName);
+       fn.checkModel(modelName);
         return Object.keys(models[modelName].rawAttributes).reduce((obj, key) => {
              if (key in bodyJson) obj[key] = bodyJson[key];
              return obj;
         },{})
     },
-    forId(id){
+    where(obj, key){
         return {
             where:{
-                id:id
+                [key]:obj[key]
             }
         }
     },
@@ -25,7 +27,7 @@ const fn = {
             res.sendStatus(500);
         } 
     },
-    PropertyInObject(property, object = models){
+    checkModel(property, object = models){
         try {//console.log(object);
         
             if (!Object.keys(models).includes(property))

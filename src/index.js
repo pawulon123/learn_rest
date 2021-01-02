@@ -7,23 +7,21 @@ app.use(bodyParser.json());
 const Rest = require('./routs')['rest'];
 
 const MODELS = [
-  {name:'user', storage:['all'], exceptionMethods : [], extentions:['searchByName'] },
-  {name:'notes', storage:[''], exceptionMethods : []}
+  {name:'user',  exceptionMethods : ['one'], extentions:['searchByName'] },
+  {name:'notes'}
 ];
 
-  const routsRest = MODELS.reduce((obj, model) => {
+  const routsRest = MODELS.reduce((obj, model) => { //for each ??
     // create instance
     const rest  = new Rest(model);
-    rest.run(); //????
-    // console.log(rest);
+    rest.run();     
     // routing
     app.use(`/${model.name}`, rest.getRouter());
-    // create object output
+    // create object output ???????????
     obj[model.name] = rest;
     return obj;
 },{});
 // const extentionRest = require('./routs/extention/ext-rest').methods(routsRest);
-
 app.listen(3000);
 
 
