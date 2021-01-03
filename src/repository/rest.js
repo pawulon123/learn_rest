@@ -13,13 +13,14 @@ const fn = {
              return obj;
         },{})
     },
-    where(obj, key){
+    whereAnd(obj, and = []){
         return {
             where:{
-                [key]:obj[key]
+                [Op['and']]: and.map(key => {return {[key]:obj[key]}}),
             }
         }
     },
+    // arrQuery(obj, arr){return arr.map(key => {return {[key]:obj[key]}})},
     interceptor(res){
         return (e) => {
             // res.sendStatus

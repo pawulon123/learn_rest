@@ -1,5 +1,5 @@
 const express = require('express');
-const {creator, where, interceptor, checkModel} =  require('../repository/rest');
+const {creator, whereAnd, interceptor, checkModel} =  require('../repository/rest');
 const valid = require('../valid') ;
 const models = require('../db');
 const extentions = require('../routs/extention/ext-rest')
@@ -32,8 +32,8 @@ const Rest = (function(){
         Rest.prototype.extention = function(){ 
             this.extentions.forEach((methodName) =>{
                 const defineMethod = extentions.methods(methodName);
-                    if (defineMethod) Rest.prototype[methodName] = defineMethod;
-                });
+                if (defineMethod) Rest.prototype[methodName] = defineMethod;
+            });
         }
         Rest.prototype.isValid = function(){
             return Object.keys(valid).includes(this.name) ? valid[this.name] 
@@ -55,7 +55,7 @@ const Rest = (function(){
         Rest.prototype.one = function(selfName){
             const self = selfName;
             this.router.get('/:id', async (req, res) => {
-                res.send(await models[this.name].findAll(where(req.params,'id')).catch(interceptor(res)))
+                res.send(await models[this.name].findAll(whereAnd(req.params,['id'])).catch(interceptor(res)))
             });
         }
         Rest.prototype.create = function(selfName){
@@ -71,13 +71,13 @@ const Rest = (function(){
             this.router.put('/:id', async (req, res) => {
                 if (this.valid) valid[this.name](req.body)
                 const model =  creator(req.body, this.name);
-                await models[this.name].update(model,where(req.params,'id')).catch(interceptor(res));
+                await models[this.name].update(model,whereAnd(req.params,['id'])).catch(interceptor(res));
                 res.end();
             });
         }
         Rest.prototype.delete = function(){
             this.router.delete('/:id', async (req, res) => {
-            await models[this.name].destroy(where(req.params,'id')).catch(interceptor(res));
+            await models[this.name].destroy(whereAnd(req.params,['id'])).catch(interceptor(res));
             res.end();
             });
         }
