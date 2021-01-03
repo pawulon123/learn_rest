@@ -13,11 +13,11 @@ const fn = {
              return obj;
         },{})
     },
-    whereAnd(obj, and = []){
-        return {
-            where:{
-                [Op['and']]: and.map(key => {return {[key]:obj[key]}}),
-            }
+    whereAnd(...configsQuery){
+        return { 
+            where: configsQuery.reduce((obj,config) =>{
+                return{ [Op.and] : config.keys.map(key => {return {[key]:config.object[key]}})}
+            },{})
         }
     },
     // arrQuery(obj, arr){return arr.map(key => {return {[key]:obj[key]}})},

@@ -11,7 +11,7 @@ const MODELS = [
   {name:'notes'}
 ];
 
-  const routsRest = MODELS.reduce((obj, model) => { //for each ??
+  const rests = MODELS.reduce((obj, model) => { //for each ??
     // create instance
     const rest  = new Rest(model);
     rest.run();     
@@ -24,6 +24,7 @@ const MODELS = [
 // const extentionRest = require('./routs/extention/ext-rest').methods(routsRest);
 app.listen(3000);
 
+// console.log(rests);
 
 
 

@@ -55,14 +55,14 @@ const Rest = (function(){
         Rest.prototype.one = function(selfName){
             const self = selfName;
             this.router.get('/:id', async (req, res) => {
-                res.send(await models[this.name].findAll(whereAnd(req.params,['id'])).catch(interceptor(res)))
+                res.send(await models[this.name].findAll(whereAnd({object:req.params, keys:['id'], operator: 'and'})).catch(interceptor(res)))
             });
         }
         Rest.prototype.create = function(selfName){
             const self = selfName;
             this.router.post('', async (req, res) => { 
                 if (this.valid) valid[this.name](req.body);
-                const model =  creator(req.body, this.name);
+                const model = creator(req.body, this.name);
                 await models[this.name].create(model).catch(interceptor(res));
                 res.sendStatus(201);
             });
@@ -71,13 +71,13 @@ const Rest = (function(){
             this.router.put('/:id', async (req, res) => {
                 if (this.valid) valid[this.name](req.body)
                 const model =  creator(req.body, this.name);
-                await models[this.name].update(model,whereAnd(req.params,['id'])).catch(interceptor(res));
+                await models[this.name].update(model,whereAnd({object:req.params, keys:['id'], operator: 'and'})).catch(interceptor(res));
                 res.end();
             });
         }
         Rest.prototype.delete = function(){
             this.router.delete('/:id', async (req, res) => {
-            await models[this.name].destroy(whereAnd(req.params,['id'])).catch(interceptor(res));
+            await models[this.name].destroy(whereAnd({object:req.params, keys:['id'], operator: 'and'})).catch(interceptor(res));
             res.end();
             });
         }
