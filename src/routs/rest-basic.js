@@ -1,5 +1,5 @@
 const express = require('express');
-const {creator,  interceptor, checkModel} =  require('../repository/rest');
+const {creator,  interceptor, checkModel, getRoute} =  require('../repository/rest');
 const {whereId} =  require('../repository/query');
 const valid = require('../valid') ;
 const models = require('../db');
@@ -25,6 +25,8 @@ const Rest = (function(){
         this.defaultMetods = ['one','all','create', 'updata','delete']; 
         this.allowMethods = this.defaultMetods.concat(this.extentions);
 
+        
+
     }
         Rest.prototype.run = function(){
             this.extention(); // overwrites existing methods with the same name
@@ -49,7 +51,10 @@ const Rest = (function(){
         ///////////////////////////////////////////////////REST///////////////////////////////////////////////
         Rest.prototype.all = function(selfName){
             const self = selfName;
-            this.router.get('/', async (req, res) => { 
+            const route = getRoute(selfName, this.config.addRoute);      
+           
+                  
+            this.router.get(`/${route}/`, async (req, res) => { 
                 res.send(
                     await models[this.name].findAll().catch(e => res.send(e))
                     .catch(interceptor(res))
@@ -58,7 +63,10 @@ const Rest = (function(){
         }
         Rest.prototype.one = function(selfName){    
             const self = selfName;
-            this.router.get('/:id', async (req, res) => {
+            let route = getRoute(selfName, this.config.addRoute);
+            route = route != '' ? route + '/' : '';
+            
+            this.router.get(`/${route}:id`, async (req, res) => {
                 res.send(await models[this.name].findAll(whereId(req.params.id)).catch(interceptor(res)))
             });
         }

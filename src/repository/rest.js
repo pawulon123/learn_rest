@@ -16,7 +16,6 @@ const fn = {
     // arrQuery(obj, arr){return arr.map(key => {return {[key]:obj[key]}})},
     interceptor(res){
         return (e) => {
-            // res.sendStatus
             console.error(e);
             res.sendStatus(500);
         } 
@@ -33,6 +32,18 @@ const fn = {
             obj[string] = null;
             return obj
         },{})
+    },
+    getRoute(methodName, routes = []){
+    
+        if (Array.isArray(routes)) {
+            const route = routes.filter(r => r.methods.includes(methodName));
+            return route.length ? route[0].route : '';
+            
+        }else if (typeof routes === 'string') {
+            return routes;
+        }else{
+            return ''
+        }
     }
    
 
