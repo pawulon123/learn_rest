@@ -6,7 +6,7 @@ app.use(bodyParser.json());
 //////////////////REST/////////////////////
 const Rest = require('./routs')['rest'];
 
-const MODELS = [
+const MODELS = [  //name r
   {name:'user',  exceptionMethods : ['one'], extentions:['searchByName'] },
   {name:'notes'}
 ];
@@ -21,7 +21,7 @@ const MODELS = [
     obj[model.name] = rest;
     return obj;
 },{});
-// const extentionRest = require('./routs/extention/ext-rest').methods(routsRest);
+// const extentionRest = require('./routs/extention/ext-rest').methods(rests);
 app.listen(3000);
 
 // console.log(rests);

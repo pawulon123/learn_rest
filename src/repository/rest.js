@@ -18,7 +18,7 @@ const fn = {
             where: configsQuery.reduce((obj,config) =>{
                 return{ [Op.and] : config.keys.map(key => {return {[key]:config.object[key]}})}
             },{})
-        }
+        };
     },
     // arrQuery(obj, arr){return arr.map(key => {return {[key]:obj[key]}})},
     interceptor(res){
@@ -41,5 +41,7 @@ const fn = {
             return obj
         },{})
     }
+   
+
 }
 module.exports = fn;

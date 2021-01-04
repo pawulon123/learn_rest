@@ -1,47 +1,49 @@
 const express = require('express');
-const {creator, whereAnd, interceptor, checkModel} =  require('../repository/rest');
+const {creator,  interceptor, checkModel, whereAnd, ifIsnTArrayGetEmpty} =  require('../repository/rest');
 const valid = require('../valid') ;
 const models = require('../db');
-const extentions = require('../routs/extention/ext-rest')
+const where = require('../repository/query/where')() 
+const extentions = require('../routs/extention/ext-rest');
 
 const Rest = (function(){
+
     function Rest(config){
         checkModel(config.name);
         this.config = config;
         this.name = config.name;  
         
         this.router = express.Router();
-        this.router.route(this.name).path = this.name
+        this.router.route(this.name).path = this.name;
         
         this.valid = this.isValid(); 
                 
-        this.exceptions = this.config.exceptionMethods || [];
-        this.extentions = this.config.extentions || [];
+        this.exceptions =  Array.isArray(this.config.exceptionMethods) ? this.config.exceptionMethods : [];
+        this.extentions =  Array.isArray(this.config.extentions) ? this.config.extentions : [];
 
-        const defaultMetods = ['one','all','create', 'updata','delete']; 
-        this.allowMethods = defaultMetods.concat(this.extentions);
+        this.defaultMetods = ['one','all','create', 'updata','delete']; 
+        this.allowMethods = this.defaultMetods.concat(this.extentions);
 
     }
         Rest.prototype.run = function(){
-            this.extention();
+            this.extention(); // overwrites existing methods with the same name
             this.allowMethods.forEach((method) => {
-                !this.exceptions.includes(method) && method in this ? this[method](method)
-                    :console.log(`method ${method} was  not call for ${this.name} model `);
+                !this.exceptions.includes(method) && method in this && !Object.keys(this).includes(method) && typeof this[method].constructor  === 'function'? 
+                    this[method](method):
+                    console.log(`method ${method} was  not call for ${this.name} model `);
             });
         }
         Rest.prototype.extention = function(){ 
             this.extentions.forEach((methodName) =>{
-                const defineMethod = extentions.methods(methodName);
-                if (defineMethod) Rest.prototype[methodName] = defineMethod;
+                const objectDefineMethod = extentions.methods(methodName);
+                if (objectDefineMethod && typeof objectDefineMethod.defineMethod.constructor  === 'function' ) Rest.prototype[methodName] = objectDefineMethod.defineMethod;
             });
         }
         Rest.prototype.isValid = function(){
             return Object.keys(valid).includes(this.name) ? valid[this.name] 
                 : console.log(`WARNING: validation for model ${this.name}  is not defined  !!!`);
         }
-        Rest.prototype.getRouter = function(){
-            return this.router;
-        }
+        Rest.prototype.getRouter = function(){ return this.router;}
+
         ///////////////////////////////////////////////////REST///////////////////////////////////////////////
         Rest.prototype.all = function(selfName){
             const self = selfName;
@@ -52,7 +54,7 @@ const Rest = (function(){
                 );
             });      
         }
-        Rest.prototype.one = function(selfName){
+        Rest.prototype.one = function(selfName){    
             const self = selfName;
             this.router.get('/:id', async (req, res) => {
                 res.send(await models[this.name].findAll(whereAnd({object:req.params, keys:['id'], operator: 'and'})).catch(interceptor(res)))
