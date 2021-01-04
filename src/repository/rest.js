@@ -1,5 +1,5 @@
 
-const { Op } = require("sequelize");
+
 const models = require('../db');
 
 const fn = {
@@ -12,13 +12,6 @@ const fn = {
              if (key in bodyJson) obj[key] = bodyJson[key];
              return obj;
         },{})
-    },
-    whereAnd(...configsQuery){
-        return { 
-            where: configsQuery.reduce((obj,config) =>{
-                return{ [Op.and] : config.keys.map(key => {return {[key]:config.object[key]}})}
-            },{})
-        };
     },
     // arrQuery(obj, arr){return arr.map(key => {return {[key]:obj[key]}})},
     interceptor(res){

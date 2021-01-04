@@ -1,8 +1,10 @@
 const express = require('express');
-const {creator,  interceptor, checkModel, whereAnd, ifIsnTArrayGetEmpty} =  require('../repository/rest');
+const {creator,  interceptor, checkModel} =  require('../repository/rest');
+const {whereId} =  require('../repository/query');
 const valid = require('../valid') ;
 const models = require('../db');
-const where = require('../repository/query/where')() 
+
+ 
 const extentions = require('../routs/extention/ext-rest');
 
 const Rest = (function(){
@@ -27,15 +29,15 @@ const Rest = (function(){
         Rest.prototype.run = function(){
             this.extention(); // overwrites existing methods with the same name
             this.allowMethods.forEach((method) => {
-                !this.exceptions.includes(method) && method in this && !Object.keys(this).includes(method) && typeof this[method].constructor  === 'function'? 
+                !this.exceptions.includes(method) && method in this &&  typeof this[method].constructor  === 'function'? 
                     this[method](method):
-                    console.log(`method ${method} was  not call for ${this.name} model `);
+                    console.log(`method ${method} was  not call for ${this.name} model`);
             });
         }
         Rest.prototype.extention = function(){ 
             this.extentions.forEach((methodName) =>{
                 const objectDefineMethod = extentions.methods(methodName);
-                if (objectDefineMethod && typeof objectDefineMethod.defineMethod.constructor  === 'function' ) Rest.prototype[methodName] = objectDefineMethod.defineMethod;
+                if (objectDefineMethod) Rest.prototype[methodName] = objectDefineMethod.defineMethod;
             });
         }
         Rest.prototype.isValid = function(){
@@ -57,7 +59,7 @@ const Rest = (function(){
         Rest.prototype.one = function(selfName){    
             const self = selfName;
             this.router.get('/:id', async (req, res) => {
-                res.send(await models[this.name].findAll(whereAnd({object:req.params, keys:['id'], operator: 'and'})).catch(interceptor(res)))
+                res.send(await models[this.name].findAll(whereId(req.params.id)).catch(interceptor(res)))
             });
         }
         Rest.prototype.create = function(selfName){
@@ -73,13 +75,13 @@ const Rest = (function(){
             this.router.put('/:id', async (req, res) => {
                 if (this.valid) valid[this.name](req.body)
                 const model =  creator(req.body, this.name);
-                await models[this.name].update(model,whereAnd({object:req.params, keys:['id'], operator: 'and'})).catch(interceptor(res));
+                await models[this.name].update(model,whereId(req.params.id)).catch(interceptor(res));
                 res.end();
             });
         }
         Rest.prototype.delete = function(){
             this.router.delete('/:id', async (req, res) => {
-            await models[this.name].destroy(whereAnd({object:req.params, keys:['id'], operator: 'and'})).catch(interceptor(res));
+            await models[this.name].destroy(whereId(req.params.id)).catch(interceptor(res));
             res.end();
             });
         }
