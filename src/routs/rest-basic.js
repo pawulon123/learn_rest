@@ -21,25 +21,29 @@ const Rest = (function(){
                 
         this.exceptions =  Array.isArray(this.config.exceptionMethods) ? this.config.exceptionMethods : [];
         this.extentions =  Array.isArray(this.config.extentions) ? this.config.extentions : [];
-
         this.defaultMetods = ['one','all','create', 'updata','delete']; 
-        this.allowMethods = this.defaultMetods.concat(this.extentions);
-
-        
+        this.allowMethods = [...new Set(this.defaultMetods.concat(this.extentions))]; // once call ??
 
     }
         Rest.prototype.run = function(){
-            this.extention(); // overwrites existing methods with the same name
+            this.extent(); 
             this.allowMethods.forEach((method) => {
-                !this.exceptions.includes(method) && method in this &&  typeof this[method].constructor  === 'function'? 
+                !this.exceptions.includes(method) //if is exeption 
+                && method in this //if belong to context
+                && typeof this[method].constructor  === 'function'? //if is function 
                     this[method](method):
-                    console.log(`method ${method} was  not call for ${this.name} model`);
+                console.log(`method ${method} was  not call for ${this.name} model`);
             });
         }
-        Rest.prototype.extention = function(){ 
-            this.extentions.forEach((methodName) =>{
-                const objectDefineMethod = extentions.methods(methodName);
-                if (objectDefineMethod) Rest.prototype[methodName] = objectDefineMethod.defineMethod;
+        
+        Rest.prototype.extent = function(){ 
+            this.extentions.forEach((methodName) =>{ //console.log(Rest.prototype);console.log(this);
+                if (!(methodName in this)) {
+                    const objectDefineMethod = extentions.methods(methodName);
+                    if (objectDefineMethod) Rest.prototype[methodName] = objectDefineMethod.defineMethod;
+                } else {
+                    console.log(`method name: "${methodName}" is not available`);
+                }
             });
         }
         Rest.prototype.isValid = function(){
@@ -48,12 +52,12 @@ const Rest = (function(){
         }
         Rest.prototype.getRouter = function(){ return this.router;}
 
-        ///////////////////////////////////////////////////REST///////////////////////////////////////////////
+        //////////////////////////////////////////////////NEED TO SEPARATE REST///////////////////////////////////////////////
+           // foward config or context ?? //
+        
         Rest.prototype.all = function(selfName){
             const self = selfName;
             const route = getRoute(selfName, this.config.addRoute);      
-           
-                  
             this.router.get(`/${route}/`, async (req, res) => { 
                 res.send(
                     await models[this.name].findAll().catch(e => res.send(e))
@@ -65,9 +69,8 @@ const Rest = (function(){
             const self = selfName;
             let route = getRoute(selfName, this.config.addRoute);
             route = route != '' ? route + '/' : '';
-            
             this.router.get(`/${route}:id`, async (req, res) => {
-                res.send(await models[this.name].findAll(whereId(req.params.id)).catch(interceptor(res)))
+            res.send(await models[this.name].findAll(whereId(req.params.id)).catch(interceptor(res)))
             });
         }
         Rest.prototype.create = function(selfName){

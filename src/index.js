@@ -7,12 +7,16 @@ app.use(bodyParser.json());
 const Rest = require('./routs')['rest'];
 
 const MODELS = [  //name r
-  {name:'user',  exceptionMethods : ['updata'], extentions:['searchByName'], 
+  {
+    name:'user',
+    exceptionMethods : ['one'],
+    extentions:['one'], 
     addRoute: [{route:'a', methods:['all','one']}]
     // addRoute: 'rout' //for all methods
   },
-
-  {name:'notes'}
+  {
+    name:'notes'
+  }
 ];
 
   const rests = MODELS.reduce((obj, model) => { //for each ??

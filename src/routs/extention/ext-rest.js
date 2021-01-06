@@ -6,7 +6,8 @@
 
         const methods = {
         
-            searchByName(selfName){
+            searchByName(selfName){ 
+            
                 const self = selfName;
                 this.router.get('/a/b', async (req, res) => { 
                 res.send(
